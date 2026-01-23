@@ -1,666 +1,264 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Bio Tetris - Plant Biology Game</title>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-    
-    body {
-      font-family: 'Courier New', monospace;
-      background-color: #0a0a0a;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      padding: 20px;
-    }
-    
-    #game-container {
-      display: flex;
-      gap: 20px;
-      align-items: flex-start;
-    }
-    
-    .panel {
-      background-color: #1a1a1a;
-      padding: 20px;
-      border-radius: 8px;
-      border: 2px solid #333;
-      width: 200px;
-      color: #fff;
-    }
-    
-    .stat-label {
-      font-size: 14px;
-      margin-bottom: 10px;
-      font-weight: bold;
-    }
-    
-    .stat-value {
-      font-size: 24px;
-      margin-bottom: 20px;
-    }
-    
-    #score { color: #0F0; }
-    #level { color: #0FF; }
-    #lines { color: #FF0; }
-    #correct { color: #F0F; }
-    
-    #next-preview {
-      background-color: #000;
-      padding: 10px;
-      border: 2px solid #333;
-      margin-top: 5px;
-    }
-    
-    #board-container {
-      background-color: #000;
-      padding: 10px;
-      border: 4px solid #333;
-      border-radius: 8px;
-      box-shadow: 0 0 20px rgba(0,255,0,0.3);
-      position: relative;
-    }
-    
-    #game-board {
-      display: grid;
-      grid-template-rows: repeat(20, 30px);
-      grid-template-columns: repeat(10, 30px);
-    }
-    
-    .cell {
-      width: 30px;
-      height: 30px;
-      border: 1px solid #222;
-    }
-    
-    .cell.filled {
-      border: 2px solid rgba(255,255,255,0.3);
-      box-shadow: inset -2px -2px 4px rgba(0,0,0,0.5), inset 2px 2px 4px rgba(255,255,255,0.3);
-    }
-    
-    button {
-      width: 100%;
-      padding: 10px;
-      margin-top: 10px;
-      background-color: #F00;
-      color: #fff;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 12px;
-      font-weight: bold;
-      font-family: 'Courier New', monospace;
-    }
-    
-    button:disabled {
-      background-color: #333;
-      cursor: not-allowed;
-    }
-    
-    button:not(:disabled):hover {
-      opacity: 0.8;
-    }
-    
-    #start-btn {
-      background-color: #0F0;
-      color: #000;
-      font-size: 20px;
-      padding: 15px 40px;
-    }
-    
-    .controls {
-      font-size: 12px;
-      line-height: 1.8;
-    }
-    
-    .modal {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background-color: rgba(0,0,0,0.95);
-      justify-content: center;
-      align-items: center;
-      z-index: 1000;
-    }
-    
-    .modal.active {
-      display: flex;
-    }
-    
-    .modal-content {
-      background-color: #1a1a1a;
-      padding: 40px;
-      border-radius: 8px;
-      text-align: center;
-      border: 4px solid #0F0;
-      box-shadow: 0 0 30px rgba(0,255,0,0.5);
-      max-width: 600px;
-    }
-    
-    .modal-title {
-      color: #0F0;
-      font-size: 24px;
-      margin-bottom: 20px;
-      font-weight: bold;
-    }
-    
-    .modal-question {
-      color: #fff;
-      font-size: 18px;
-      margin-bottom: 30px;
-      line-height: 1.6;
-    }
-    
-    .answer-btn {
-      padding: 15px 20px;
-      font-size: 16px;
-      background-color: #333;
-      color: #fff;
-      border: 2px solid #0F0;
-      margin: 5px 0;
-      cursor: pointer;
-    }
-    
-    .answer-btn:hover {
-      background-color: #0F0;
-      color: #000;
-    }
-    
-    #game-over-modal .modal-content {
-      border-color: #F00;
-      box-shadow: 0 0 30px rgba(255,0,0,0.5);
-    }
-    
-    #game-over-modal .modal-title {
-      color: #F00;
-      font-size: 36px;
-    }
-    
-    .paused-indicator {
-      display: none;
-      margin-top: 20px;
-      padding: 10px;
-      background-color: #FF0;
-      color: #000;
-      text-align: center;
-      font-weight: bold;
-      font-size: 18px;
-    }
-    
-    .paused-indicator.active {
-      display: block;
-    }
-    
-    #start-screen {
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background-color: rgba(0,0,0,0.9);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 10;
-    }
-    
-    #start-screen.hidden {
-      display: none;
-    }
-    
-    .start-content {
-      text-align: center;
-    }
-    
-    .game-title {
-      color: #0F0;
-      font-size: 32px;
-      font-weight: bold;
-      margin-bottom: 20px;
-    }
-  </style>
+<meta charset="UTF-8">
+<title>BioTetris – Principles of Life</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+body{
+  margin:0;
+  font-family:system-ui, Arial, sans-serif;
+  background:#0b1020;
+  color:white;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+}
+h1{margin:10px}
+.container{display:flex;gap:20px;flex-wrap:wrap;justify-content:center}
+canvas{background:#111;border:2px solid #444}
+.panel{
+  max-width:360px;
+  background:#151a33;
+  padding:14px;
+  border-radius:12px;
+}
+.choice{
+  display:block;
+  width:100%;
+  margin-top:8px;
+  padding:8px;
+  background:#2c315c;
+  color:white;
+  border:none;
+  border-radius:6px;
+  cursor:pointer;
+}
+.correct{background:#2ecc71}
+.wrong{background:#e74c3c}
+.small{font-size:13px;color:#bbb}
+</style>
 </head>
-<body>
-  <div id="game-container">
-    <div class="panel">
-      <div class="stat-label">SCORE</div>
-      <div class="stat-value" id="score">000000</div>
-      
-      <div class="stat-label">LEVEL</div>
-      <div class="stat-value" id="level">1</div>
-      
-      <div class="stat-label">LINES</div>
-      <div class="stat-value" id="lines">0</div>
-      
-      <div class="stat-label">NEXT</div>
-      <div id="next-preview"></div>
-      
-      <div class="stat-label" style="margin-top: 20px;">BIOLOGY 🧬</div>
-      <div class="stat-value" id="correct" style="font-size: 18px;">Correct: 0</div>
-      <button id="clear-row-btn" disabled>⚡ CLEAR ROW (0)</button>
-    </div>
-    
-    <div id="board-container">
-      <div id="start-screen">
-        <div class="start-content">
-          <div class="game-title">🌱 BIO TETRIS 🧬</div>
-          <button id="start-btn">START GAME</button>
-        </div>
-      </div>
-      <div id="game-board"></div>
-    </div>
-    
-    <div class="panel">
-      <div class="stat-label">CONTROLS</div>
-      <div class="controls">
-        <div>← → : MOVE</div>
-        <div>↑ : ROTATE</div>
-        <div>↓ : SOFT DROP</div>
-        <div>SPACE : HARD DROP</div>
-        <div>P : PAUSE</div>
-      </div>
-      <div id="paused-indicator" class="paused-indicator">PAUSED</div>
-    </div>
-  </div>
-  
-  <div id="question-modal" class="modal">
-    <div class="modal-content">
-      <div class="modal-title">🧬 BIOLOGY CHALLENGE! 🌱</div>
-      <div class="modal-question" id="question-text"></div>
-      <div id="answers-container"></div>
-    </div>
-  </div>
-  
-  <div id="game-over-modal" class="modal">
-    <div class="modal-content">
-      <div class="modal-title">GAME OVER</div>
-      <div style="color: #fff; font-size: 18px; margin-bottom: 10px;">
-        FINAL SCORE: <span id="final-score">000000</span>
-      </div>
-      <div style="color: #fff; font-size: 16px; margin-bottom: 10px;">
-        LINES: <span id="final-lines">0</span>
-      </div>
-      <div style="color: #0F0; font-size: 16px; margin-bottom: 30px;">
-        QUESTIONS CORRECT: <span id="final-correct">0</span>
-      </div>
-      <button id="play-again-btn" style="background-color: #0F0; color: #000; font-size: 20px; padding: 15px 40px;">PLAY AGAIN</button>
-    </div>
-  </div>
 
-  <script>
-    const BOARD_WIDTH = 10;
-    const BOARD_HEIGHT = 20;
-    
-    const SHAPES = [
-      { shape: [[1,1,1,1]], color: '#00F0F0' },
-      { shape: [[1,1],[1,1]], color: '#F0F000' },
-      { shape: [[0,1,0],[1,1,1]], color: '#A000F0' },
-      { shape: [[1,0,0],[1,1,1]], color: '#F0A000' },
-      { shape: [[0,0,1],[1,1,1]], color: '#0000F0' },
-      { shape: [[1,1,0],[0,1,1]], color: '#00F000' },
-      { shape: [[0,1,1],[1,1,0]], color: '#F00000' }
-    ];
-    
-    const QUESTIONS = [
-      { q: "What does the anther produce?", a: ["Pollen", "Seeds", "Nectar", "Ovules"], correct: 0 },
-      { q: "What are the female parts of a flower called?", a: ["Carpel", "Stamen", "Sepal", "Petal"], correct: 0 },
-      { q: "What is a plant's growth response to light called?", a: ["Phototropism", "Geotropism", "Hydrotropism", "Thigmotropism"], correct: 0 },
-      { q: "Which pollination method uses bright petals?", a: ["Insect", "Wind", "Water", "Self"], correct: 0 },
-      { q: "What type of reproduction produces identical offspring?", a: ["Asexual", "Sexual", "Binary", "Budding"], correct: 0 },
-      { q: "What is the binomial name format?", a: ["Genus species", "species Genus", "GENUS SPECIES", "Family species"], correct: 0 },
-      { q: "Roots grow downward showing positive...", a: ["Gravitropism", "Phototropism", "Hydrotropism", "Chemotropism"], correct: 0 },
-      { q: "What cell wall material do plants have?", a: ["Cellulose", "Chitin", "Peptidoglycan", "Protein"], correct: 0 },
-      { q: "What are wind-pollinated pollen grains like?", a: ["Small & light", "Large & sticky", "Colorful", "Heavy"], correct: 0 },
-      { q: "What does the ovary become after fertilization?", a: ["Fruit", "Seed", "Petal", "Root"], correct: 0 },
-      { q: "Shoots grow toward light, showing positive...", a: ["Phototropism", "Geotropism", "Gravitropism", "Thigmotropism"], correct: 0 },
-      { q: "How many domains are in the modern classification?", a: ["3", "2", "5", "6"], correct: 0 },
-      { q: "What produces nectar in flowers?", a: ["Nectaries", "Anthers", "Stigma", "Ovules"], correct: 0 },
-      { q: "The stigma in insect-pollinated flowers is...", a: ["Sticky", "Feathery", "Smooth", "Dry"], correct: 0 }
-    ];
-    
-    let board = [];
-    let currentPiece = null;
-    let nextPiece = null;
-    let position = { x: 0, y: 0 };
-    let score = 0;
-    let lines = 0;
-    let level = 1;
-    let gameOver = false;
-    let paused = false;
-    let gameStarted = false;
-    let correctAnswers = 0;
-    let powerUps = { clearRow: 0 };
-    let gameLoop = null;
-    let currentQuestion = null;
-    
-    const gameBoard = document.getElementById('game-board');
-    const startScreen = document.getElementById('start-screen');
-    const startBtn = document.getElementById('start-btn');
-    const playAgainBtn = document.getElementById('play-again-btn');
-    const clearRowBtn = document.getElementById('clear-row-btn');
-    const questionModal = document.getElementById('question-modal');
-    const gameOverModal = document.getElementById('game-over-modal');
-    const pausedIndicator = document.getElementById('paused-indicator');
-    
-    function initBoard() {
-      board = Array(BOARD_HEIGHT).fill().map(() => Array(BOARD_WIDTH).fill(null));
-      gameBoard.innerHTML = '';
-      for (let y = 0; y < BOARD_HEIGHT; y++) {
-        for (let x = 0; x < BOARD_WIDTH; x++) {
-          const cell = document.createElement('div');
-          cell.className = 'cell';
-          cell.dataset.x = x;
-          cell.dataset.y = y;
-          gameBoard.appendChild(cell);
-        }
-      }
-    }
-    
-    function renderBoard() {
-      const cells = gameBoard.querySelectorAll('.cell');
-      cells.forEach(cell => {
-        const x = parseInt(cell.dataset.x);
-        const y = parseInt(cell.dataset.y);
-        let color = board[y][x];
-        
-        if (currentPiece) {
-          currentPiece.shape.forEach((row, py) => {
-            row.forEach((value, px) => {
-              if (value && position.y + py === y && position.x + px === x) {
-                color = currentPiece.color;
-              }
-            });
-          });
-        }
-        
-        if (color) {
-          cell.style.backgroundColor = color;
-          cell.classList.add('filled');
-        } else {
-          cell.style.backgroundColor = '#000';
-          cell.classList.remove('filled');
-        }
-      });
-    }
-    
-    function renderNextPiece() {
-      const preview = document.getElementById('next-preview');
-      preview.innerHTML = '';
-      preview.style.display = 'grid';
-      preview.style.gridTemplateRows = 'repeat(4, 20px)';
-      preview.style.gridTemplateColumns = 'repeat(4, 20px)';
-      
-      if (!nextPiece) return;
-      
-      for (let y = 0; y < 4; y++) {
-        for (let x = 0; x < 4; x++) {
-          const cell = document.createElement('div');
-          cell.style.width = '20px';
-          cell.style.height = '20px';
-          cell.style.border = '1px solid #111';
-          
-          if (nextPiece.shape[y] && nextPiece.shape[y][x]) {
-            cell.style.backgroundColor = nextPiece.color;
-            cell.style.border = '1px solid rgba(255,255,255,0.3)';
-            cell.style.boxShadow = 'inset -1px -1px 2px rgba(0,0,0,0.5)';
-          } else {
-            cell.style.backgroundColor = '#000';
-          }
-          
-          preview.appendChild(cell);
-        }
-      }
-    }
-    
-    function updateStats() {
-      document.getElementById('score').textContent = score.toString().padStart(6, '0');
-      document.getElementById('level').textContent = level;
-      document.getElementById('lines').textContent = lines;
-      document.getElementById('correct').textContent = 'Correct: ' + correctAnswers;
-      clearRowBtn.textContent = `⚡ CLEAR ROW (${powerUps.clearRow})`;
-      clearRowBtn.disabled = powerUps.clearRow === 0;
-    }
-    
-    function spawnPiece() {
-      const piece = nextPiece || SHAPES[Math.floor(Math.random() * SHAPES.length)];
-      nextPiece = SHAPES[Math.floor(Math.random() * SHAPES.length)];
-      currentPiece = JSON.parse(JSON.stringify(piece));
-      position = {
-        x: Math.floor(BOARD_WIDTH / 2) - Math.floor(piece.shape[0].length / 2),
-        y: 0
-      };
-      
-      renderNextPiece();
-      
-      if (checkCollision(currentPiece.shape, position)) {
-        gameOver = true;
-        gameStarted = false;
-        showGameOver();
-      }
-    }
-    
-    function checkCollision(shape, pos) {
-      for (let y = 0; y < shape.length; y++) {
-        for (let x = 0; x < shape[y].length; x++) {
-          if (shape[y][x]) {
-            const newY = pos.y + y;
-            const newX = pos.x + x;
-            if (newY >= BOARD_HEIGHT || newX < 0 || newX >= BOARD_WIDTH ||
-                (newY >= 0 && board[newY][newX])) {
-              return true;
-            }
-          }
-        }
-      }
-      return false;
-    }
-    
-    function mergePiece() {
-      currentPiece.shape.forEach((row, y) => {
-        row.forEach((cell, x) => {
-          if (cell) {
-            const boardY = position.y + y;
-            const boardX = position.x + x;
-            if (boardY >= 0 && boardY < BOARD_HEIGHT) {
-              board[boardY][boardX] = currentPiece.color;
-            }
-          }
-        });
-      });
-      
-      clearLines();
-      
-      if (Math.random() < 0.25) {
-        showQuestion();
-      } else {
-        spawnPiece();
-      }
-    }
-    
-    function clearLines() {
-      let linesCleared = 0;
-      board = board.filter(row => {
-        if (row.every(cell => cell !== null)) {
-          linesCleared++;
-          return false;
-        }
-        return true;
-      });
-      
-      while (board.length < BOARD_HEIGHT) {
-        board.unshift(Array(BOARD_WIDTH).fill(null));
-      }
-      
-      if (linesCleared > 0) {
-        lines += linesCleared;
-        const points = [0, 40, 100, 300, 1200][linesCleared] * level;
-        score += points;
-        level = Math.floor(lines / 10) + 1;
-        updateStats();
-      }
-    }
-    
-    function moveDown() {
-      if (!currentPiece || paused || gameOver) return;
-      
-      const newPos = { x: position.x, y: position.y + 1 };
-      if (checkCollision(currentPiece.shape, newPos)) {
-        mergePiece();
-      } else {
-        position = newPos;
-      }
-      renderBoard();
-    }
-    
-    function moveLeft() {
-      if (!currentPiece || paused || gameOver) return;
-      const newPos = { x: position.x - 1, y: position.y };
-      if (!checkCollision(currentPiece.shape, newPos)) {
-        position = newPos;
-        renderBoard();
-      }
-    }
-    
-    function moveRight() {
-      if (!currentPiece || paused || gameOver) return;
-      const newPos = { x: position.x + 1, y: position.y };
-      if (!checkCollision(currentPiece.shape, newPos)) {
-        position = newPos;
-        renderBoard();
-      }
-    }
-    
-    function rotate() {
-      if (!currentPiece || paused || gameOver) return;
-      const rotated = currentPiece.shape[0].map((_, i) =>
-        currentPiece.shape.map(row => row[i]).reverse()
-      );
-      if (!checkCollision(rotated, position)) {
-        currentPiece.shape = rotated;
-        renderBoard();
-      }
-    }
-    
-    function hardDrop() {
-      if (!currentPiece || paused || gameOver) return;
-      while (!checkCollision(currentPiece.shape, { x: position.x, y: position.y + 1 })) {
-        position.y++;
-      }
-      renderBoard();
-      setTimeout(mergePiece, 50);
-    }
-    
-    function showQuestion() {
-      paused = true;
-      currentQuestion = QUESTIONS[Math.floor(Math.random() * QUESTIONS.length)];
-      document.getElementById('question-text').textContent = currentQuestion.q;
-      
-      const answersContainer = document.getElementById('answers-container');
-      answersContainer.innerHTML = '';
-      
-      currentQuestion.a.forEach((answer, idx) => {
-        const btn = document.createElement('button');
-        btn.className = 'answer-btn';
-        btn.textContent = answer;
-        btn.onclick = () => handleAnswer(idx);
-        answersContainer.appendChild(btn);
-      });
-      
-      questionModal.classList.add('active');
-    }
-    
-    function handleAnswer(idx) {
-      if (idx === currentQuestion.correct) {
-        correctAnswers++;
-        score += 100 * level;
-        powerUps.clearRow++;
-        updateStats();
-      }
-      
-      questionModal.classList.remove('active');
-      paused = false;
-      pausedIndicator.classList.remove('active');
-      spawnPiece();
-      renderBoard();
-    }
-    
-    function showGameOver() {
-      document.getElementById('final-score').textContent = score.toString().padStart(6, '0');
-      document.getElementById('final-lines').textContent = lines;
-      document.getElementById('final-correct').textContent = correctAnswers;
-      gameOverModal.classList.add('active');
-    }
-    
-    function startGame() {
-      board = Array(BOARD_HEIGHT).fill().map(() => Array(BOARD_WIDTH).fill(null));
-      score = 0;
-      lines = 0;
-      level = 1;
-      gameOver = false;
-      paused = false;
-      correctAnswers = 0;
-      powerUps = { clearRow: 0 };
-      gameStarted = true;
-      
-      nextPiece = SHAPES[Math.floor(Math.random() * SHAPES.length)];
-      spawnPiece();
-      
-      startScreen.classList.add('hidden');
-      gameOverModal.classList.remove('active');
-      updateStats();
-      renderBoard();
-      
-      if (gameLoop) clearInterval(gameLoop);
-      gameLoop = setInterval(() => {
-        if (gameStarted && !paused && !gameOver) {
-          moveDown();
-        }
-      }, Math.max(100, 800 - (level - 1) * 50));
-    }
-    
-    function useClearRow() {
-      if (powerUps.clearRow > 0 && !gameOver) {
-        board.pop();
-        board.unshift(Array(BOARD_WIDTH).fill(null));
-        powerUps.clearRow--;
-        updateStats();
-        renderBoard();
-      }
-    }
-    
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'ArrowLeft') moveLeft();
-      if (e.key === 'ArrowRight') moveRight();
-      if (e.key === 'ArrowDown') moveDown();
-      if (e.key === 'ArrowUp') rotate();
-      if (e.key === ' ') {
-        e.preventDefault();
-        hardDrop();
-      }
-      if (e.key === 'p' || e.key === 'P') {
-        if (!questionModal.classList.contains('active')) {
-          paused = !paused;
-          pausedIndicator.classList.toggle('active', paused);
-        }
-      }
-    });
-    
-    startBtn.addEventListener('click', startGame);
-    playAgainBtn.addEventListener('click', startGame);
-    clearRowBtn.addEventListener('click', useClearRow);
-    
-    initBoard();
-    updateStats();
-  </script>
+<body>
+<h1>🧬 BioTetris: Principles of Life</h1>
+<div class="small">Clear a line → answer a question from your biology unit</div>
+
+<div class="container">
+<canvas id="game" width="240" height="480"></canvas>
+
+<div class="panel">
+<h3>Biology Checkpoint</h3>
+<div id="question">Clear a line to unlock a question.</div>
+<div id="choices"></div>
+<p id="explain" class="small"></p>
+<hr>
+<p class="small">
+⌨ Controls:<br>
+← → move · ↑ rotate · ↓ drop · Space = hard drop
+</p>
+</div>
+</div>
+
+<script>
+/* ===== QUESTIONS FROM YOUR PDF ===== */
+const QUESTIONS = [
+{
+q:"What is an ecosystem?",
+c:[
+"All living organisms and the non-living environment they interact with",
+"Only plants in an area",
+"Only animals in an area",
+"A single species population"
+],
+a:0,
+e:"An ecosystem includes biotic (living) and abiotic (non-living) factors."
+},
+{
+q:"Which of the following is an abiotic factor?",
+c:["Predators","Bacteria","Temperature","Competition"],
+a:2,
+e:"Abiotic factors are non-living, such as temperature, light, and pH."
+},
+{
+q:"Which organisms act as decomposers in ecosystems?",
+c:["Plants","Herbivores","Fungi and bacteria","Carnivores"],
+a:2,
+e:"Decomposers recycle nutrients back into the environment."
+},
+{
+q:"What is a hypothesis?",
+c:[
+"A proven fact",
+"An educated, testable prediction",
+"A random guess",
+"A conclusion"
+],
+a:1,
+e:"A hypothesis is an educated prediction based on observations."
+},
+{
+q:"Which statement is part of cell theory?",
+c:[
+"All cells have a cell wall",
+"Cells arise from existing cells",
+"Cells are not living",
+"Only animals are made of cells"
+],
+a:1,
+e:"Cell theory states that new cells come from existing cells."
+},
+{
+q:"Which biomolecule is the main source of energy in respiration?",
+c:["Proteins","Lipids","Carbohydrates","Nucleic acids"],
+a:2,
+e:"Carbohydrates such as glucose are used in respiration."
+},
+{
+q:"Which biomolecule forms cell membranes?",
+c:["Proteins","Lipids","Carbohydrates","DNA"],
+a:1,
+e:"Lipids (phospholipids) form cell membranes."
+},
+{
+q:"Enzymes are important because they…",
+c:[
+"Are used up in reactions",
+"Slow reactions down",
+"Speed up chemical reactions",
+"Make energy directly"
+],
+a:2,
+e:"Enzymes are biological catalysts."
+},
+{
+q:"Where does aerobic respiration mainly occur?",
+c:["Nucleus","Mitochondria","Ribosomes","Cell wall"],
+a:1,
+e:"Mitochondria release energy (ATP) in respiration."
+},
+{
+q:"Osmosis is best described as…",
+c:[
+"Movement of glucose using energy",
+"Movement of water across a partially permeable membrane",
+"Movement of oxygen in blood",
+"Movement of ions against a gradient"
+],
+a:1,
+e:"Osmosis is the diffusion of water through a partially permeable membrane."
+}
+];
+
+/* ===== TETRIS ENGINE ===== */
+const canvas=document.getElementById("game");
+const ctx=canvas.getContext("2d");
+const COLS=10,ROWS=20,SIZE=24;
+let grid=[...Array(ROWS)].map(()=>Array(COLS).fill(0));
+
+const SHAPES=[
+[[1,1,1,1]],
+[[1,1],[1,1]],
+[[0,1,0],[1,1,1]],
+[[1,1,0],[0,1,1]],
+[[0,1,1],[1,1,0]]
+];
+
+let piece,newQuestion=true;
+
+function newPiece(){
+const s=SHAPES[Math.floor(Math.random()*SHAPES.length)];
+return{s,x:3,y:0};
+}
+piece=newPiece();
+
+function collide(px,py,ps){
+for(let y=0;y<ps.length;y++)
+for(let x=0;x<ps[y].length;x++)
+if(ps[y][x]){
+let nx=px+x,ny=py+y;
+if(nx<0||nx>=COLS||ny>=ROWS||grid[ny]?.[nx])return true;
+}
+return false;
+}
+
+function merge(){
+piece.s.forEach((r,y)=>r.forEach((v,x)=>{
+if(v)grid[piece.y+y][piece.x+x]=1;
+}));
+}
+
+function clearLines(){
+let cleared=0;
+grid=grid.filter(r=>{
+if(r.every(v=>v)){cleared++;return false;}
+return true;
+});
+while(grid.length<ROWS)grid.unshift(Array(COLS).fill(0));
+if(cleared>0)askQuestion();
+}
+
+function draw(){
+ctx.clearRect(0,0,canvas.width,canvas.height);
+grid.forEach((r,y)=>r.forEach((v,x)=>{
+if(v){ctx.fillStyle="#4ef0a3";ctx.fillRect(x*SIZE,y*SIZE,SIZE,SIZE);}
+}));
+piece.s.forEach((r,y)=>r.forEach((v,x)=>{
+if(v){ctx.fillStyle="#ffd166";ctx.fillRect((piece.x+x)*SIZE,(piece.y+y)*SIZE,SIZE,SIZE);}
+}));
+}
+
+function drop(){
+if(!collide(piece.x,piece.y+1,piece.s))piece.y++;
+else{
+merge();
+clearLines();
+piece=newPiece();
+if(collide(piece.x,piece.y,piece.s)){
+alert("Game Over");
+location.reload();
+}
+}
+draw();
+}
+
+setInterval(drop,600);
+
+/* ===== CONTROLS ===== */
+document.addEventListener("keydown",e=>{
+if(e.key==="ArrowLeft"&&!collide(piece.x-1,piece.y,piece.s))piece.x--;
+if(e.key==="ArrowRight"&&!collide(piece.x+1,piece.y,piece.s))piece.x++;
+if(e.key==="ArrowDown")drop();
+if(e.key==="ArrowUp"){
+const r=piece.s[0].map((_,i)=>piece.s.map(r=>r[i]).reverse());
+if(!collide(piece.x,piece.y,r))piece.s=r;
+}
+if(e.key===" ")while(!collide(piece.x,piece.y+1,piece.s))piece.y++;
+draw();
+});
+
+/* ===== QUIZ ===== */
+function askQuestion(){
+if(!newQuestion)return;
+newQuestion=false;
+const q=QUESTIONS[Math.floor(Math.random()*QUESTIONS.length)];
+document.getElementById("question").textContent=q.q;
+const c=document.getElementById("choices");
+c.innerHTML="";
+q.c.forEach((t,i)=>{
+const b=document.createElement("button");
+b.textContent=t;
+b.className="choice";
+b.onclick=()=>{
+document.getElementById("explain").textContent=q.e;
+b.classList.add(i===q.a?"correct":"wrong");
+newQuestion=true;
+};
+c.appendChild(b);
+});
+}
+
+draw();
+</script>
 </body>
 </html>
