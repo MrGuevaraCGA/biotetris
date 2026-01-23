@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>BioTetris – Principles of Life</title>
+<title>BioTetris – Think to Move</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
 body{
@@ -34,27 +34,30 @@ canvas{background:#111;border:2px solid #444}
   border-radius:6px;
   cursor:pointer;
 }
-.correct{background:#2ecc71}
-.wrong{background:#e74c3c}
+.choice.correct{background:#2ecc71}
+.choice.wrong{background:#e74c3c}
 .small{font-size:13px;color:#bbb}
+.locked{color:#ff7675;font-weight:bold}
+.unlocked{color:#2ecc71;font-weight:bold}
 </style>
 </head>
 
 <body>
-<h1>🧬 BioTetris: Principles of Life</h1>
-<div class="small">Clear a line → answer a question from your biology unit</div>
+<h1>🧬 BioTetris</h1>
+<div class="small">Answer correctly to unlock movement</div>
 
 <div class="container">
 <canvas id="game" width="240" height="480"></canvas>
 
 <div class="panel">
-<h3>Biology Checkpoint</h3>
-<div id="question">Clear a line to unlock a question.</div>
+<h3>Biology Lock</h3>
+<div id="lockState" class="locked">🔒 Controls locked</div>
+<p id="question">New piece = new question</p>
 <div id="choices"></div>
 <p id="explain" class="small"></p>
 <hr>
 <p class="small">
-⌨ Controls:<br>
+⌨ Controls (when unlocked):<br>
 ← → move · ↑ rotate · ↓ drop · Space = hard drop
 </p>
 </div>
@@ -66,87 +69,42 @@ const QUESTIONS = [
 {
 q:"What is an ecosystem?",
 c:[
-"All living organisms and the non-living environment they interact with",
-"Only plants in an area",
-"Only animals in an area",
-"A single species population"
+"All living organisms and the non-living environment",
+"Only plants",
+"Only animals",
+"One species"
 ],
 a:0,
-e:"An ecosystem includes biotic (living) and abiotic (non-living) factors."
+e:"Ecosystems include both biotic and abiotic factors."
 },
 {
-q:"Which of the following is an abiotic factor?",
-c:["Predators","Bacteria","Temperature","Competition"],
+q:"Which is an abiotic factor?",
+c:["Bacteria","Predators","Temperature","Competition"],
 a:2,
-e:"Abiotic factors are non-living, such as temperature, light, and pH."
+e:"Abiotic factors are non-living."
 },
 {
-q:"Which organisms act as decomposers in ecosystems?",
-c:["Plants","Herbivores","Fungi and bacteria","Carnivores"],
+q:"Which biomolecule is used in respiration?",
+c:["Proteins","Lipids","Carbohydrates","Nucleic acids"],
 a:2,
-e:"Decomposers recycle nutrients back into the environment."
+e:"Glucose is a carbohydrate."
+},
+{
+q:"Where does aerobic respiration occur?",
+c:["Nucleus","Ribosomes","Mitochondria","Cell wall"],
+a:2,
+e:"Mitochondria produce ATP."
 },
 {
 q:"What is a hypothesis?",
 c:[
 "A proven fact",
 "An educated, testable prediction",
-"A random guess",
+"A guess",
 "A conclusion"
 ],
 a:1,
-e:"A hypothesis is an educated prediction based on observations."
-},
-{
-q:"Which statement is part of cell theory?",
-c:[
-"All cells have a cell wall",
-"Cells arise from existing cells",
-"Cells are not living",
-"Only animals are made of cells"
-],
-a:1,
-e:"Cell theory states that new cells come from existing cells."
-},
-{
-q:"Which biomolecule is the main source of energy in respiration?",
-c:["Proteins","Lipids","Carbohydrates","Nucleic acids"],
-a:2,
-e:"Carbohydrates such as glucose are used in respiration."
-},
-{
-q:"Which biomolecule forms cell membranes?",
-c:["Proteins","Lipids","Carbohydrates","DNA"],
-a:1,
-e:"Lipids (phospholipids) form cell membranes."
-},
-{
-q:"Enzymes are important because they…",
-c:[
-"Are used up in reactions",
-"Slow reactions down",
-"Speed up chemical reactions",
-"Make energy directly"
-],
-a:2,
-e:"Enzymes are biological catalysts."
-},
-{
-q:"Where does aerobic respiration mainly occur?",
-c:["Nucleus","Mitochondria","Ribosomes","Cell wall"],
-a:1,
-e:"Mitochondria release energy (ATP) in respiration."
-},
-{
-q:"Osmosis is best described as…",
-c:[
-"Movement of glucose using energy",
-"Movement of water across a partially permeable membrane",
-"Movement of oxygen in blood",
-"Movement of ions against a gradient"
-],
-a:1,
-e:"Osmosis is the diffusion of water through a partially permeable membrane."
+e:"Hypotheses are tested experimentally."
 }
 ];
 
@@ -164,98 +122,108 @@ const SHAPES=[
 [[0,1,1],[1,1,0]]
 ];
 
-let piece,newQuestion=true;
+let piece;
+let controlsLocked=true;
+let currentQuestion=null;
 
 function newPiece(){
-const s=SHAPES[Math.floor(Math.random()*SHAPES.length)];
-return{s,x:3,y:0};
+  controlsLocked=true;
+  document.getElementById("lockState").textContent="🔒 Controls locked";
+  document.getElementById("lockState").className="locked";
+  askQuestion();
+  const s=SHAPES[Math.floor(Math.random()*SHAPES.length)];
+  return{s,x:3,y:0};
 }
+
 piece=newPiece();
 
 function collide(px,py,ps){
-for(let y=0;y<ps.length;y++)
-for(let x=0;x<ps[y].length;x++)
-if(ps[y][x]){
-let nx=px+x,ny=py+y;
-if(nx<0||nx>=COLS||ny>=ROWS||grid[ny]?.[nx])return true;
-}
-return false;
+  for(let y=0;y<ps.length;y++)
+  for(let x=0;x<ps[y].length;x++)
+  if(ps[y][x]){
+    let nx=px+x,ny=py+y;
+    if(nx<0||nx>=COLS||ny>=ROWS||grid[ny]?.[nx])return true;
+  }
+  return false;
 }
 
 function merge(){
-piece.s.forEach((r,y)=>r.forEach((v,x)=>{
-if(v)grid[piece.y+y][piece.x+x]=1;
-}));
-}
-
-function clearLines(){
-let cleared=0;
-grid=grid.filter(r=>{
-if(r.every(v=>v)){cleared++;return false;}
-return true;
-});
-while(grid.length<ROWS)grid.unshift(Array(COLS).fill(0));
-if(cleared>0)askQuestion();
+  piece.s.forEach((r,y)=>r.forEach((v,x)=>{
+    if(v)grid[piece.y+y][piece.x+x]=1;
+  }));
 }
 
 function draw(){
-ctx.clearRect(0,0,canvas.width,canvas.height);
-grid.forEach((r,y)=>r.forEach((v,x)=>{
-if(v){ctx.fillStyle="#4ef0a3";ctx.fillRect(x*SIZE,y*SIZE,SIZE,SIZE);}
-}));
-piece.s.forEach((r,y)=>r.forEach((v,x)=>{
-if(v){ctx.fillStyle="#ffd166";ctx.fillRect((piece.x+x)*SIZE,(piece.y+y)*SIZE,SIZE,SIZE);}
-}));
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  grid.forEach((r,y)=>r.forEach((v,x)=>{
+    if(v){
+      ctx.fillStyle="#4ef0a3";
+      ctx.fillRect(x*SIZE,y*SIZE,SIZE,SIZE);
+    }
+  }));
+  piece.s.forEach((r,y)=>r.forEach((v,x)=>{
+    if(v){
+      ctx.fillStyle=controlsLocked?"#888":"#ffd166";
+      ctx.fillRect((piece.x+x)*SIZE,(piece.y+y)*SIZE,SIZE,SIZE);
+    }
+  }));
 }
 
 function drop(){
-if(!collide(piece.x,piece.y+1,piece.s))piece.y++;
-else{
-merge();
-clearLines();
-piece=newPiece();
-if(collide(piece.x,piece.y,piece.s)){
-alert("Game Over");
-location.reload();
-}
-}
-draw();
+  if(!collide(piece.x,piece.y+1,piece.s)){
+    piece.y++;
+  } else {
+    merge();
+    piece=newPiece();
+    if(collide(piece.x,piece.y,piece.s)){
+      alert("Game Over");
+      location.reload();
+    }
+  }
+  draw();
 }
 
-setInterval(drop,600);
+setInterval(drop,650);
 
-/* ===== CONTROLS ===== */
+/* ===== CONTROLS (LOCKED UNTIL ANSWER) ===== */
 document.addEventListener("keydown",e=>{
-if(e.key==="ArrowLeft"&&!collide(piece.x-1,piece.y,piece.s))piece.x--;
-if(e.key==="ArrowRight"&&!collide(piece.x+1,piece.y,piece.s))piece.x++;
-if(e.key==="ArrowDown")drop();
-if(e.key==="ArrowUp"){
-const r=piece.s[0].map((_,i)=>piece.s.map(r=>r[i]).reverse());
-if(!collide(piece.x,piece.y,r))piece.s=r;
-}
-if(e.key===" ")while(!collide(piece.x,piece.y+1,piece.s))piece.y++;
-draw();
+  if(controlsLocked) return;
+  if(e.key==="ArrowLeft"&&!collide(piece.x-1,piece.y,piece.s))piece.x--;
+  if(e.key==="ArrowRight"&&!collide(piece.x+1,piece.y,piece.s))piece.x++;
+  if(e.key==="ArrowDown")drop();
+  if(e.key==="ArrowUp"){
+    const r=piece.s[0].map((_,i)=>piece.s.map(r=>r[i]).reverse());
+    if(!collide(piece.x,piece.y,r))piece.s=r;
+  }
+  if(e.key===" ")while(!collide(piece.x,piece.y+1,piece.s))piece.y++;
+  draw();
 });
 
 /* ===== QUIZ ===== */
 function askQuestion(){
-if(!newQuestion)return;
-newQuestion=false;
-const q=QUESTIONS[Math.floor(Math.random()*QUESTIONS.length)];
-document.getElementById("question").textContent=q.q;
-const c=document.getElementById("choices");
-c.innerHTML="";
-q.c.forEach((t,i)=>{
-const b=document.createElement("button");
-b.textContent=t;
-b.className="choice";
-b.onclick=()=>{
-document.getElementById("explain").textContent=q.e;
-b.classList.add(i===q.a?"correct":"wrong");
-newQuestion=true;
-};
-c.appendChild(b);
-});
+  const q=QUESTIONS[Math.floor(Math.random()*QUESTIONS.length)];
+  currentQuestion=q;
+  document.getElementById("question").textContent=q.q;
+  document.getElementById("explain").textContent="";
+  const c=document.getElementById("choices");
+  c.innerHTML="";
+  q.c.forEach((t,i)=>{
+    const b=document.createElement("button");
+    b.textContent=t;
+    b.className="choice";
+    b.onclick=()=>{
+      if(i===q.a){
+        b.classList.add("correct");
+        controlsLocked=false;
+        document.getElementById("lockState").textContent="🔓 Controls unlocked";
+        document.getElementById("lockState").className="unlocked";
+      }else{
+        b.classList.add("wrong");
+      }
+      document.getElementById("explain").textContent=q.e;
+    };
+    c.appendChild(b);
+  });
 }
 
 draw();
