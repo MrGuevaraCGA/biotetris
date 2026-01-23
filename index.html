@@ -1,232 +1,490 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>BioTetris – Think to Move</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>BioTetris - Think to Move</title>
 <style>
-body{
-  margin:0;
-  font-family:system-ui, Arial, sans-serif;
-  background:#0b1020;
-  color:white;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-}
-h1{margin:10px}
-.container{display:flex;gap:20px;flex-wrap:wrap;justify-content:center}
-canvas{background:#111;border:2px solid #444}
-.panel{
-  max-width:360px;
-  background:#151a33;
-  padding:14px;
-  border-radius:12px;
-}
-.choice{
-  display:block;
-  width:100%;
-  margin-top:8px;
-  padding:8px;
-  background:#2c315c;
-  color:white;
-  border:none;
-  border-radius:6px;
-  cursor:pointer;
-}
-.choice.correct{background:#2ecc71}
-.choice.wrong{background:#e74c3c}
-.small{font-size:13px;color:#bbb}
-.locked{color:#ff7675;font-weight:bold}
-.unlocked{color:#2ecc71;font-weight:bold}
+  :root{
+    --bg:#0b1020;
+    --panel:#151a33;
+    --ink:#ffffff;
+    --muted:#b8c0ff;
+    --ok:#2ecc71;
+    --bad:#e74c3c;
+    --lock:#ff7675;
+    --btn:#2c315c;
+    --grid:#444;
+  }
+  body{
+    margin:0;
+    font-family:system-ui, Arial, sans-serif;
+    background:var(--bg);
+    color:var(--ink);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:10px;
+  }
+  h1{margin:10px 0 4px 0; font-size:22px;}
+  .small{font-size:13px;color:var(--muted);line-height:1.35}
+  .container{display:flex;gap:20px;flex-wrap:wrap;justify-content:center;align-items:flex-start;}
+  canvas{background:#111;border:2px solid var(--grid); border-radius:8px;}
+  .panel{
+    width:min(380px, 92vw);
+    background:var(--panel);
+    padding:14px;
+    border-radius:12px;
+    box-shadow: 0 10px 24px rgba(0,0,0,.35);
+  }
+  .row{display:flex; gap:10px; align-items:center; justify-content:space-between; flex-wrap:wrap;}
+  .pill{padding:6px 10px; border-radius:999px; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.12); font-size:12px; color:var(--muted)}
+  .choice{
+    display:block;
+    width:100%;
+    margin-top:8px;
+    padding:10px;
+    background:var(--btn);
+    color:var(--ink);
+    border:none;
+    border-radius:10px;
+    cursor:pointer;
+    text-align:left;
+    transition: transform .04s ease, opacity .2s ease;
+  }
+  .choice:active{transform: translateY(1px)}
+  .choice.correct{background:var(--ok)}
+  .choice.wrong{background:var(--bad)}
+  .locked{color:var(--lock);font-weight:800}
+  .unlocked{color:var(--ok);font-weight:800}
+  .kbd{margin-top:8px; display:flex; gap:8px; flex-wrap:wrap;}
+  .key{font-size:11px; padding:5px 7px; border-radius:10px; border:1px solid rgba(255,255,255,.14); background:rgba(255,255,255,.06); color:var(--muted)}
+</style>
+<style>
+  .musicRow{margin-top:10px;display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
 </style>
 </head>
-
 <body>
-<h1>🧬 BioTetris</h1>
-<div class="small">Answer correctly to unlock movement</div>
+  <h1>BioTetris (Think to Move)</h1>
+  <div class="small">New piece = new question. Answer correctly to unlock controls for that piece.</div>
 
-<div class="container">
-<canvas id="game" width="240" height="480"></canvas>
+  <div class="container">
+    <canvas id="game" width="240" height="480" aria-label="Tetris board"></canvas>
 
-<div class="panel">
-<h3>Biology Lock</h3>
-<div id="lockState" class="locked">🔒 Controls locked</div>
-<p id="question">New piece = new question</p>
-<div id="choices"></div>
-<p id="explain" class="small"></p>
-<hr>
-<p class="small">
-⌨ Controls (when unlocked):<br>
-← → move · ↑ rotate · ↓ drop · Space = hard drop
-</p>
-</div>
-</div>
+    <div class="panel">
+      <div class="row">
+        <div>
+          <div style="font-weight:900; font-size:16px;">Biology Lock</div>
+          <div id="lockState" class="locked">Locked - answer to move</div>
+        </div>
+        <div class="pill">Speed: <span id="speedLabel">650</span> ms</div>
+      </div>
+
+      <p id="question" style="margin:10px 0 8px 0; font-weight:700;">Loading question...</p>
+      <div id="choices"></div>
+      <p id="explain" class="small" style="margin-top:10px;"></p>
+
+      <hr style="border:none; border-top:1px solid rgba(255,255,255,.12); margin:12px 0;" />
+
+      <div class="small"><b>Controls (only when unlocked):</b></div>
+      <div class="kbd" aria-label="Keyboard controls">
+        <span class="key">Left/Right: move</span>
+        <span class="key">Up: rotate</span>
+        <span class="key">Down: soft drop</span>
+        <span class="key">Space: hard drop</span>
+      </div>
+
+      <div class="small" style="margin-top:10px;">
+        Tip: If you answer wrong, the piece keeps falling while you try again.</div>
+      <div class="musicRow">
+        <div class="small"><b>Music:</b> adaptive chiptune</div>
+        <button class="btn" id="musicToggle" type="button">Play</button>
+      </div>
+      </div>
+    </div>
+  </div>
 
 <script>
-/* ===== QUESTIONS FROM YOUR PDF ===== */
-const QUESTIONS = [
-{
-q:"What is an ecosystem?",
-c:[
-"All living organisms and the non-living environment",
-"Only plants",
-"Only animals",
-"One species"
-],
-a:0,
-e:"Ecosystems include both biotic and abiotic factors."
-},
-{
-q:"Which is an abiotic factor?",
-c:["Bacteria","Predators","Temperature","Competition"],
-a:2,
-e:"Abiotic factors are non-living."
-},
-{
-q:"Which biomolecule is used in respiration?",
-c:["Proteins","Lipids","Carbohydrates","Nucleic acids"],
-a:2,
-e:"Glucose is a carbohydrate."
-},
-{
-q:"Where does aerobic respiration occur?",
-c:["Nucleus","Ribosomes","Mitochondria","Cell wall"],
-a:2,
-e:"Mitochondria produce ATP."
-},
-{
-q:"What is a hypothesis?",
-c:[
-"A proven fact",
-"An educated, testable prediction",
-"A guess",
-"A conclusion"
-],
-a:1,
-e:"Hypotheses are tested experimentally."
-}
-];
+(() => {
+  // -------------------------
+  // SIMPLE CHIPTUNE MUSIC (Web Audio API)
+  // -------------------------
+  let audioCtx = null;
+  let musicOn = false;
+  let musicTimer = null;
 
-/* ===== TETRIS ENGINE ===== */
-const canvas=document.getElementById("game");
-const ctx=canvas.getContext("2d");
-const COLS=10,ROWS=20,SIZE=24;
-let grid=[...Array(ROWS)].map(()=>Array(COLS).fill(0));
-
-const SHAPES=[
-[[1,1,1,1]],
-[[1,1],[1,1]],
-[[0,1,0],[1,1,1]],
-[[1,1,0],[0,1,1]],
-[[0,1,1],[1,1,0]]
-];
-
-let piece;
-let controlsLocked=true;
-let currentQuestion=null;
-
-function newPiece(){
-  controlsLocked=true;
-  document.getElementById("lockState").textContent="🔒 Controls locked";
-  document.getElementById("lockState").className="locked";
-  askQuestion();
-  const s=SHAPES[Math.floor(Math.random()*SHAPES.length)];
-  return{s,x:3,y:0};
-}
-
-piece=newPiece();
-
-function collide(px,py,ps){
-  for(let y=0;y<ps.length;y++)
-  for(let x=0;x<ps[y].length;x++)
-  if(ps[y][x]){
-    let nx=px+x,ny=py+y;
-    if(nx<0||nx>=COLS||ny>=ROWS||grid[ny]?.[nx])return true;
+  function startMusic(){
+    if(musicOn) return;
+    if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    musicOn = true;
+    scheduleNotes();
   }
-  return false;
-}
 
-function merge(){
-  piece.s.forEach((r,y)=>r.forEach((v,x)=>{
-    if(v)grid[piece.y+y][piece.x+x]=1;
-  }));
-}
+  function stopMusic(){
+    musicOn = false;
+    if(musicTimer) clearTimeout(musicTimer);
+  }
 
-function draw(){
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  grid.forEach((r,y)=>r.forEach((v,x)=>{
-    if(v){
-      ctx.fillStyle="#4ef0a3";
-      ctx.fillRect(x*SIZE,y*SIZE,SIZE,SIZE);
-    }
-  }));
-  piece.s.forEach((r,y)=>r.forEach((v,x)=>{
-    if(v){
-      ctx.fillStyle=controlsLocked?"#888":"#ffd166";
-      ctx.fillRect((piece.x+x)*SIZE,(piece.y+y)*SIZE,SIZE,SIZE);
-    }
-  }));
-}
+  const melody = [261, 329, 392, 329, 294, 329, 392, 440];
+  let noteIndex = 0;
 
-function drop(){
-  if(!collide(piece.x,piece.y+1,piece.s)){
-    piece.y++;
-  } else {
-    merge();
-    piece=newPiece();
-    if(collide(piece.x,piece.y,piece.s)){
-      alert("Game Over");
-      location.reload();
+  function playNote(freq, duration){
+    if(!musicOn) return;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = "square";
+    osc.frequency.value = freq;
+    gain.gain.value = 0.04;
+    osc.connect(gain).connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + duration);
+  }
+
+  function scheduleNotes(){
+    if(!musicOn) return;
+    const speedFactor = Math.max(0.6, dropMs / 650);
+    const duration = 0.18 * speedFactor;
+    playNote(melody[noteIndex % melody.length], duration);
+    noteIndex++;
+    musicTimer = setTimeout(scheduleNotes, duration * 1000);
+  }
+
+  // -------------------------
+  // QUESTIONS (40 items)
+  // -------------------------
+  const QUESTIONS = [
+    {q:"What is an ecosystem?",c:["All living organisms and the non-living environment","Only plants","Only animals","One species"],a:0,e:"An ecosystem includes both biotic (living) and abiotic (non-living) factors."},
+    {q:"Which is an abiotic factor?",c:["Bacteria","Predators","Temperature","Competition"],a:2,e:"Abiotic factors are non-living (e.g., temperature, light, pH)."},
+    {q:"Which organisms are decomposers?",c:["Plants","Herbivores","Fungi and bacteria","Carnivores"],a:2,e:"Decomposers (mainly fungi and bacteria) recycle nutrients."},
+    {q:"Which is a biotic factor?",c:["Light","Temperature","Bacteria","pH"],a:2,e:"Biotic factors are living things (e.g., bacteria, plants, animals)."},
+
+    {q:"What is a hypothesis?",c:["A proven fact","An educated, testable prediction","A guess with no evidence","A final conclusion"],a:1,e:"A hypothesis is an educated prediction you can test."},
+    {q:"Which comes after forming a hypothesis?",c:["Conclusion","Experiment","Theory","Observation"],a:1,e:"You test a hypothesis by doing an experiment."},
+    {q:"A scientific theory is best described as...",c:["A random idea","An evidence-supported explanation","A personal opinion","A single observation"],a:1,e:"Theories are supported by lots of evidence and can be refined."},
+
+    {q:"Which is part of cell theory?",c:["All cells have walls","Cells come from existing cells","Cells are not living","Only plants have cells"],a:1,e:"Cell theory says new cells come from existing cells."},
+    {q:"What is the basic unit of life?",c:["Organ","Tissue","Cell","System"],a:2,e:"Cells are the basic unit of structure and function."},
+    {q:"Which is NOT a cell theory statement?",c:["All living things are made of cells","Cells are the basic unit of life","New cells come from existing cells","All cells have a cell wall"],a:3,e:"Animal cells do not have cell walls."},
+
+    {q:"Which biomolecule is used in respiration as a main fuel?",c:["Proteins","Lipids","Carbohydrates","Nucleic acids"],a:2,e:"Glucose is a carbohydrate commonly used in respiration."},
+    {q:"What do animals store carbohydrates as?",c:["Starch","Cellulose","Glycogen","Glucose"],a:2,e:"Animals store carbohydrate as glycogen."},
+    {q:"What do plants store carbohydrates as?",c:["Glycogen","Cellulose","Starch","Protein"],a:2,e:"Plants store carbohydrate as starch."},
+    {q:"Which biomolecule forms cell membranes?",c:["Proteins","Lipids","Carbohydrates","DNA"],a:1,e:"Lipids (phospholipids) form membranes."},
+    {q:"Which biomolecule is mainly for growth and repair?",c:["Proteins","Lipids","Carbohydrates","Minerals"],a:0,e:"Proteins help build and repair tissues."},
+    {q:"DNA and RNA are examples of...",c:["Carbohydrates","Lipids","Proteins","Nucleic acids"],a:3,e:"Nucleic acids carry genetic information."},
+
+    {q:"Enzymes are best described as...",c:["Energy sources","Biological catalysts","Structural fats","Genetic material"],a:1,e:"Enzymes speed up reactions and are not used up."},
+    {q:"The molecule an enzyme acts on is called the...",c:["Active site","Substrate","Product","Cell wall"],a:1,e:"The substrate fits into the enzyme's active site."},
+    {q:"What can cause enzymes to denature?",c:["Correct pH and temperature","Very high temperature","More substrate","More water"],a:1,e:"High temperature can change the enzyme shape (denature)."},
+    {q:"If an enzyme denatures, what happens?",c:["It works faster","Its shape changes","It multiplies","Nothing changes"],a:1,e:"Denaturation changes the active site so the substrate may not fit."},
+
+    {q:"Where is DNA found in eukaryotic cells?",c:["Ribosomes","Cytoplasm","Nucleus","Cell wall"],a:2,e:"DNA is stored in the nucleus on chromosomes."},
+    {q:"Which organelle makes proteins?",c:["Mitochondria","Ribosomes","Nucleus","Vacuole"],a:1,e:"Ribosomes are the site of protein synthesis."},
+    {q:"Which organelle releases energy (ATP) in aerobic respiration?",c:["Chloroplast","Nucleus","Mitochondria","Ribosome"],a:2,e:"Mitochondria carry out aerobic respiration."},
+    {q:"Which structure is typical of plant cells but not animal cells?",c:["Ribosome","Cell membrane","Chloroplast","Cytoplasm"],a:2,e:"Chloroplasts carry out photosynthesis in plant cells."},
+    {q:"Plant cell walls are mainly made of...",c:["Protein","Cellulose","Glycogen","DNA"],a:1,e:"Plant cell walls are made of cellulose."},
+
+    {q:"Diffusion is...",c:["Movement using energy","Movement from low to high concentration","Movement from high to low concentration","Movement of water only"],a:2,e:"Diffusion moves particles down a concentration gradient."},
+    {q:"Osmosis is...",c:["Movement of ions","Movement of water across a partially permeable membrane","Active transport","Gas exchange"],a:1,e:"Osmosis is diffusion of water through a partially permeable membrane."},
+    {q:"Which process requires energy?",c:["Diffusion","Osmosis","Active transport","Filtration"],a:2,e:"Active transport moves substances against the gradient using energy."},
+    {q:"Which change increases diffusion rate?",c:["Lower temperature","Smaller gradient","Shorter distance","Thicker membrane"],a:2,e:"Shorter diffusion distance increases rate."},
+
+    {q:"Photosynthesis occurs in which organelle?",c:["Mitochondria","Chloroplast","Nucleus","Ribosome"],a:1,e:"Chloroplasts contain chlorophyll for photosynthesis."},
+    {q:"Chlorophyll is used for...",c:["Respiration","Absorbing light","Making proteins","Storing glucose"],a:1,e:"Chlorophyll absorbs light energy."},
+    {q:"Which gas is needed for photosynthesis?",c:["Oxygen","Nitrogen","Carbon dioxide","Hydrogen"],a:2,e:"Carbon dioxide is a reactant in photosynthesis."},
+    {q:"Which gas is released during photosynthesis?",c:["Carbon dioxide","Nitrogen","Oxygen","Hydrogen"],a:2,e:"Oxygen is released as a product."},
+
+    {q:"Aerobic respiration is...",c:["Energy without oxygen","Energy with oxygen","Photosynthesis","Diffusion"],a:1,e:"Aerobic respiration uses oxygen to release lots of ATP."},
+    {q:"Where does aerobic respiration mainly occur?",c:["Nucleus","Mitochondria","Cytoplasm","Ribosome"],a:1,e:"Mitochondria are the main site of aerobic respiration."},
+    {q:"Aerobic respiration produces...",c:["ATP, carbon dioxide, water","Glucose","Oxygen","Lactic acid"],a:0,e:"It releases ATP energy and produces CO2 and water."},
+    {q:"Anaerobic respiration in muscles produces...",c:["ATP + oxygen","Lactic acid","Ethanol","Glucose"],a:1,e:"In muscles, anaerobic respiration forms lactic acid."},
+    {q:"Anaerobic respiration in yeast produces...",c:["Lactic acid","Ethanol and carbon dioxide","Oxygen","ATP only"],a:1,e:"This is fermentation: ethanol + CO2 + a little ATP."},
+
+    {q:"Which typically releases the most energy?",c:["Diffusion","Anaerobic respiration","Aerobic respiration","Osmosis"],a:2,e:"Aerobic respiration releases the most ATP."},
+    {q:"Which factor commonly affects enzyme activity?",c:["Sound","Temperature","Color","Magnetism"],a:1,e:"Enzymes have an optimum temperature."},
+    {q:"In the scientific method, data analysis happens...",c:["Before the experiment","After the experiment","Instead of the experiment","Only at the start"],a:1,e:"You analyze data after conducting an experiment."},
+    {q:"A control in an experiment is used to...",c:["Make it harder","Compare results fairly","Change variables randomly","Stop data collection"],a:1,e:"Controls help you see the effect of the independent variable."}
+  ];
+
+  // -------------------------
+  // NON-REPEATING QUESTION QUEUE
+  // -------------------------
+  let questionQueue = [];
+  function resetQuestionQueue(){
+    questionQueue = QUESTIONS.map((_,i)=>i);
+    for(let i=questionQueue.length-1;i>0;i--){
+      const j = Math.floor(Math.random()*(i+1));
+      const tmp = questionQueue[i];
+      questionQueue[i] = questionQueue[j];
+      questionQueue[j] = tmp;
     }
   }
-  draw();
-}
 
-setInterval(drop,650);
-
-/* ===== CONTROLS (LOCKED UNTIL ANSWER) ===== */
-document.addEventListener("keydown",e=>{
-  if(controlsLocked) return;
-  if(e.key==="ArrowLeft"&&!collide(piece.x-1,piece.y,piece.s))piece.x--;
-  if(e.key==="ArrowRight"&&!collide(piece.x+1,piece.y,piece.s))piece.x++;
-  if(e.key==="ArrowDown")drop();
-  if(e.key==="ArrowUp"){
-    const r=piece.s[0].map((_,i)=>piece.s.map(r=>r[i]).reverse());
-    if(!collide(piece.x,piece.y,r))piece.s=r;
+  function popNextQuestion(){
+    if(questionQueue.length === 0) resetQuestionQueue();
+    return QUESTIONS[questionQueue.shift()];
   }
-  if(e.key===" ")while(!collide(piece.x,piece.y+1,piece.s))piece.y++;
-  draw();
-});
 
-/* ===== QUIZ ===== */
-function askQuestion(){
-  const q=QUESTIONS[Math.floor(Math.random()*QUESTIONS.length)];
-  currentQuestion=q;
-  document.getElementById("question").textContent=q.q;
-  document.getElementById("explain").textContent="";
-  const c=document.getElementById("choices");
-  c.innerHTML="";
-  q.c.forEach((t,i)=>{
-    const b=document.createElement("button");
-    b.textContent=t;
-    b.className="choice";
-    b.onclick=()=>{
-      if(i===q.a){
-        b.classList.add("correct");
-        controlsLocked=false;
-        document.getElementById("lockState").textContent="🔓 Controls unlocked";
-        document.getElementById("lockState").className="unlocked";
-      }else{
-        b.classList.add("wrong");
+  // -------------------------
+  // TETRIS
+  // -------------------------
+  const canvas = document.getElementById("game");
+  const ctx = canvas.getContext("2d");
+  const COLS = 10, ROWS = 20, SIZE = 24;
+
+  let grid = Array.from({length: ROWS}, () => Array(COLS).fill(0));
+
+  const SHAPES = [
+    [[1,1,1,1]],
+    [[1,1],[1,1]],
+    [[0,1,0],[1,1,1]],
+    [[1,1,0],[0,1,1]],
+    [[0,1,1],[1,1,0]]
+  ];
+
+  let piece = null;
+  let controlsLocked = true;
+
+  // Speed: starts at 650ms and becomes 5% faster every 60 seconds.
+  let dropMs = 650;
+  const speedLabel = document.getElementById("speedLabel");
+
+  function updateSpeedLabel(){
+    speedLabel.textContent = Math.max(80, Math.round(dropMs));
+  }
+
+  // Increase speed every minute
+  setInterval(() => {
+    dropMs = Math.max(80, dropMs * 0.95);
+    updateSpeedLabel();
+  }, 60000);
+
+  function setLockUI(isLocked){
+    const el = document.getElementById("lockState");
+    if(isLocked){
+      el.textContent = "Locked - answer to move";
+      el.className = "locked";
+    } else {
+      el.textContent = "Unlocked - you can move";
+      el.className = "unlocked";
+    }
+  }
+
+  function askQuestionAndRender(){
+    const q = popNextQuestion();
+    document.getElementById("question").textContent = q.q;
+    document.getElementById("explain").textContent = "";
+
+    const choices = document.getElementById("choices");
+    choices.innerHTML = "";
+
+    q.c.forEach((txt, idx) => {
+      const b = document.createElement("button");
+      b.className = "choice";
+      b.type = "button";
+      b.textContent = String.fromCharCode(65 + idx) + ". " + txt;
+      b.onclick = () => {
+        // lock stays until correct
+        if(idx === q.a){
+          b.classList.add("correct");
+          controlsLocked = false;
+          setLockUI(false);
+        } else {
+          b.classList.add("wrong");
+        }
+        document.getElementById("explain").textContent = q.e;
+      };
+      choices.appendChild(b);
+    });
+  }
+
+  function newPiece(){
+    controlsLocked = true;
+    setLockUI(true);
+    askQuestionAndRender();
+
+    const s = SHAPES[Math.floor(Math.random() * SHAPES.length)];
+    // Start from a random valid horizontal position (not always centered)
+    const maxX = COLS - s[0].length;
+    const startX = Math.floor(Math.random() * (maxX + 1));
+
+    return { s, x: startX, y: 0 };
+  }
+
+  function collide(px, py, ps){
+    for(let y=0; y<ps.length; y++){
+      for(let x=0; x<ps[y].length; x++){
+        if(!ps[y][x]) continue;
+        const nx = px + x;
+        const ny = py + y;
+        if(nx < 0 || nx >= COLS || ny >= ROWS) return true;
+        if(ny >= 0 && grid[ny][nx]) return true;
       }
-      document.getElementById("explain").textContent=q.e;
-    };
-    c.appendChild(b);
-  });
-}
+    }
+    return false;
+  }
 
-draw();
+  function merge(){
+    piece.s.forEach((row, y) => row.forEach((v, x) => {
+      if(v) grid[piece.y + y][piece.x + x] = 1;
+    }));
+  }
+
+  function clearLines(){
+    for(let y=ROWS-1; y>=0; y--){
+      if(grid[y].every(v => v)){
+        grid.splice(y, 1);
+        grid.unshift(Array(COLS).fill(0));
+        y++; // re-check same y after shifting
+      }
+    }
+  }
+
+  function rotateCW(shape){
+    // clockwise rotation
+    const h = shape.length;
+    const w = shape[0].length;
+    const out = Array.from({length: w}, () => Array(h).fill(0));
+    for(let r=0; r<h; r++){
+      for(let c=0; c<w; c++){
+        out[c][h-1-r] = shape[r][c];
+      }
+    }
+    return out;
+  }
+
+  function draw(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+
+    // fixed blocks
+    for(let y=0; y<ROWS; y++){
+      for(let x=0; x<COLS; x++){
+        if(grid[y][x]){
+          ctx.fillStyle = "#4ef0a3";
+          ctx.fillRect(x*SIZE, y*SIZE, SIZE, SIZE);
+        }
+      }
+    }
+
+    // current piece
+    if(piece){
+      const color = controlsLocked ? "#888" : "#ffd166";
+      ctx.fillStyle = color;
+      piece.s.forEach((row, y) => row.forEach((v, x) => {
+        if(v) ctx.fillRect((piece.x + x)*SIZE, (piece.y + y)*SIZE, SIZE, SIZE);
+      }));
+    }
+  }
+
+  function gameOver(){
+    alert("Game Over");
+    location.reload();
+  }
+
+  // Variable speed game loop using setTimeout (so we can change dropMs)
+  function tick(){
+    // Always fall (even when locked)
+    if(!collide(piece.x, piece.y + 1, piece.s)){
+      piece.y++;
+    } else {
+      merge();
+      clearLines();
+      piece = newPiece();
+      if(collide(piece.x, piece.y, piece.s)){
+        gameOver();
+        return;
+      }
+    }
+
+    draw();
+    setTimeout(tick, Math.max(80, Math.round(dropMs)));
+  }
+
+  // Controls - only work when unlocked
+  document.addEventListener("keydown", (e) => {
+    // Start music on first interaction (browser autoplay policy)
+    if(!musicOn) startMusic();
+    if(controlsLocked) return;
+
+    if(e.key === "ArrowLeft"){
+      e.preventDefault();
+      if(!collide(piece.x - 1, piece.y, piece.s)) piece.x--;
+    }
+    if(e.key === "ArrowRight"){
+      e.preventDefault();
+      if(!collide(piece.x + 1, piece.y, piece.s)) piece.x++;
+    }
+    if(e.key === "ArrowDown"){
+      e.preventDefault();
+      // soft drop
+      if(!collide(piece.x, piece.y + 1, piece.s)) piece.y++;
+    }
+    if(e.key === "ArrowUp"){
+      e.preventDefault();
+      const rotated = rotateCW(piece.s);
+      // simple wall-kick attempts
+      const kicks = [0, -1, 1, -2, 2];
+      for(const k of kicks){
+        if(!collide(piece.x + k, piece.y, rotated)){
+          piece.s = rotated;
+          piece.x += k;
+          break;
+        }
+      }
+    }
+    if(e.key === " "){
+      e.preventDefault();
+      // hard drop
+      while(!collide(piece.x, piece.y + 1, piece.s)) piece.y++;
+    }
+
+    draw();
+  });
+
+  // -------------------------
+  // Self-tests (lightweight)
+  // -------------------------
+  function runSelfTests(){
+    console.assert(QUESTIONS.length >= 40, "Expected at least 40 questions");
+    resetQuestionQueue();
+    console.assert(questionQueue.length === QUESTIONS.length, "Question queue should match question count");
+    const seen = new Set();
+    for(let i=0;i<QUESTIONS.length;i++) seen.add(popNextQuestion().q);
+    console.assert(seen.size === QUESTIONS.length, "Questions should not repeat within one full cycle");
+
+    // test spawn x validity for all shapes
+    for(const s of SHAPES){
+      const maxX = COLS - s[0].length;
+      for(let t=0;t<10;t++){
+        const x = Math.floor(Math.random()*(maxX+1));
+        console.assert(x >= 0 && x <= maxX, "Spawn x out of bounds");
+      }
+    }
+  }
+
+  // Music toggle button
+  const musicBtn = document.getElementById("musicToggle");
+  musicBtn.addEventListener("click", () => {
+    if(musicOn){
+      stopMusic();
+      musicBtn.textContent = "Play";
+    } else {
+      startMusic();
+      musicBtn.textContent = "Pause";
+    }
+  });
+
+  // -------------------------
+  // Init
+  // -------------------------
+  resetQuestionQueue();
+  updateSpeedLabel();
+  runSelfTests();
+
+  piece = newPiece();
+  draw();
+  setTimeout(tick, Math.max(80, Math.round(dropMs)));
+})();
 </script>
 </body>
 </html>
